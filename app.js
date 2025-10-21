@@ -48,32 +48,35 @@ function initMap() {
 }
 
 // Select a random road in Berea, SC
-function selectNewRoad() {
+async function selectNewRoad() {
     // Reset game state
     resetGame();
 
     // Show loading state
     document.getElementById('currentRoadName').textContent = 'Searching for road...';
 
-    // Use Places API to find roads in Berea, SC
-    const service = new google.maps.places.PlacesService(map);
-    
     // Generate random road type search terms
     const roadTypes = ['road', 'street', 'avenue', 'highway', 'lane', 'drive'];
     const randomType = roadTypes[Math.floor(Math.random() * roadTypes.length)];
     
-    // Search for roads in Berea area using textSearch
-    const request = {
-        query: randomType + ' in Berea, SC',
-        location: BEREA_CENTER,
-        radius: 5000 // 5km radius
-    };
+    try {
+        // Search for roads in Berea area using the new Places API
+        const request = {
+            textQuery: randomType + ' in Berea, SC',
+            fields: ['displayName', 'location'],
+            locationBias: {
+                center: BEREA_CENTER,
+                radius: 5000 // 5km radius
+            },
+            maxResultCount: 20
+        };
 
-    service.textSearch(request, function(results, status) {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
+        const { places } = await google.maps.places.Place.searchByText(request);
+
+        if (places && places.length > 0) {
             // Filter for actual roads/streets
-            const roads = results.filter(place => {
-                const name = place.name.toLowerCase();
+            const roads = places.filter(place => {
+                const name = place.displayName ? place.displayName.toLowerCase() : '';
                 return (name.includes('road') || 
                         name.includes('street') || 
                         name.includes('avenue') ||
@@ -90,7 +93,13 @@ function selectNewRoad() {
             if (roads.length > 0) {
                 // Select a random road from the results
                 const randomIndex = Math.floor(Math.random() * roads.length);
-                currentRoad = roads[randomIndex];
+                const selectedPlace = roads[randomIndex];
+                currentRoad = {
+                    name: selectedPlace.displayName,
+                    geometry: {
+                        location: selectedPlace.location
+                    }
+                };
                 document.getElementById('currentRoadName').textContent = currentRoad.name;
             } else {
                 // Fallback to predefined list if no suitable roads found
@@ -100,7 +109,11 @@ function selectNewRoad() {
             // Fallback if API request fails
             useFallbackRoad();
         }
-    });
+    } catch (error) {
+        console.error('Error fetching roads:', error);
+        // Fallback if API request fails
+        useFallbackRoad();
+    }
 }
 
 // Use fallback road from predefined list
