@@ -65,8 +65,10 @@ async function selectNewRoad() {
             textQuery: randomType + ' in Berea, SC',
             fields: ['displayName', 'location'],
             locationBias: {
-                center: BEREA_CENTER,
-                radius: 5000 // 5km radius
+                circle: {
+                    center: BEREA_CENTER,
+                    radius: 5000 // 5km radius
+                }
             },
             maxResultCount: 20
         };
