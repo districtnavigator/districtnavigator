@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berea SC Road Navigator - Guess the Road</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Berea Road Navigator</h1>
+            <p class="subtitle">Can you guess where this road is?</p>
+        </header>
+
+        <div class="game-container">
+            <div class="info-panel">
+                <div id="roadName" class="road-name">
+                    <span class="label">Road Name:</span>
+                    <span id="currentRoadName" class="road-text">Loading...</span>
+                </div>
+                
+                <div class="instructions">
+                    <p>Click on the map to place a pin where you think this road is located.</p>
+                </div>
+
+                <div class="controls">
+                    <button id="submitGuess" class="btn btn-primary" disabled>Submit Guess</button>
+                    <button id="newRoad" class="btn btn-secondary">New Road</button>
+                </div>
+
+                <div id="resultPanel" class="result-panel" style="display: none;">
+                    <h3>Results</h3>
+                    <p id="distanceResult"></p>
+                    <p id="accuracyMessage"></p>
+                </div>
+            </div>
+
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <footer>
+            <p>District Navigator - Berea, SC</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places,geometry&callback=initMap">
+    </script>
+</body>
+</html>
