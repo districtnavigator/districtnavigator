@@ -1,0 +1,26 @@
+# API Keys and Secrets
+.env
+.env.local
+config.js
+secrets.json
+
+# Development
+node_modules/
+.vscode/
+.idea/
+*.log
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+*.min.js
+*.min.css
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
