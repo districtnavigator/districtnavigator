@@ -31,8 +31,10 @@ districtnavigator/
 ### 🎮 Core Features
 
 #### 1. Random Road Selection
-- Uses Google Places API nearbySearch
+- Uses Google Places API textSearch with dynamic road type queries
+- Searches for roads in Berea, SC area (5km radius)
 - Filters for actual roads (street, road, avenue, highway, etc.)
+- Excludes non-roads (exits, bridges)
 - Fallback to predefined list of 13 common Berea roads
 - Geocoding for fallback roads
 

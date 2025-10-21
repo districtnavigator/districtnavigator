@@ -58,14 +58,18 @@ function selectNewRoad() {
     // Use Places API to find roads in Berea, SC
     const service = new google.maps.places.PlacesService(map);
     
-    // Search for roads in Berea area
+    // Generate random road type search terms
+    const roadTypes = ['road', 'street', 'avenue', 'highway', 'lane', 'drive'];
+    const randomType = roadTypes[Math.floor(Math.random() * roadTypes.length)];
+    
+    // Search for roads in Berea area using textSearch
     const request = {
+        query: randomType + ' in Berea, SC',
         location: BEREA_CENTER,
-        radius: 5000, // 5km radius
-        type: ['route']
+        radius: 5000 // 5km radius
     };
 
-    service.nearbySearch(request, function(results, status) {
+    service.textSearch(request, function(results, status) {
         if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
             // Filter for actual roads/streets
             const roads = results.filter(place => {
@@ -79,7 +83,8 @@ function selectNewRoad() {
                         name.includes('way') ||
                         name.includes('circle') ||
                         name.includes('boulevard')) &&
-                       !name.includes('exit');
+                       !name.includes('exit') &&
+                       !name.includes('bridge');
             });
 
             if (roads.length > 0) {

@@ -131,16 +131,16 @@ resetGame()         // Clears state
 
 #### Places API
 **Usage**: Find roads in area
-**Endpoint**: `nearbySearch`
+**Endpoint**: `textSearch`
 **Parameters**:
 ```javascript
 {
+  query: '<road type> in Berea, SC',
   location: LatLng,
-  radius: 5000,
-  type: ['route']
+  radius: 5000
 }
 ```
-**Filtering**: Client-side filter for road keywords
+**Filtering**: Client-side filter for road keywords, excludes exits and bridges
 
 #### Geocoding API
 **Usage**: Fallback road location
