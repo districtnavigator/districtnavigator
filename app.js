@@ -228,7 +228,7 @@ async function selectNewRoad() {
             
             // Step 4: Get the road name using the placeId with Geocoding API
             const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ placeId: placeId }, function(results, status) {
+            geocoder.geocode({ placeId: placeId }, async function(results, status) {
                 if (status === 'OK' && results.length > 0) {
                     // Extract road name from the geocoded address
                     const address = results[0].address_components;
@@ -242,16 +242,21 @@ async function selectNewRoad() {
                         }
                     }
                     
+                    // Step 5: Get the road polyline using Directions API
+                    // Create a route along the road to get its polyline geometry
+                    const roadPolyline = await getRoadPolyline(roadLocation, roadName);
+                    
                     currentRoad = {
                         name: roadName,
                         geometry: {
                             location: new google.maps.LatLng(roadLocation.latitude, roadLocation.longitude)
                         },
+                        polyline: roadPolyline, // Store the polyline path
                         placeId: placeId
                     };
                     
                     document.getElementById('currentRoadName').textContent = roadName;
-                    console.log('Found road:', roadName);
+                    console.log('Found road:', roadName, 'with', roadPolyline ? roadPolyline.length : 0, 'polyline points');
                 } else {
                     console.error('Geocoding failed:', status);
                     useFallbackRoad();
@@ -267,8 +272,60 @@ async function selectNewRoad() {
     }
 }
 
+// Get road polyline using Directions API
+async function getRoadPolyline(roadLocation, roadName) {
+    try {
+        // Create two points along the road - one slightly before and one slightly after
+        // We'll use a small offset to create a route along the road
+        const offset = 0.005; // About 500 meters
+        
+        // Create origin and destination points offset from the road location
+        const origin = new google.maps.LatLng(
+            roadLocation.latitude - offset,
+            roadLocation.longitude - offset
+        );
+        const destination = new google.maps.LatLng(
+            roadLocation.latitude + offset,
+            roadLocation.longitude + offset
+        );
+        
+        // Use DirectionsService to get the route
+        const directionsService = new google.maps.DirectionsService();
+        
+        return new Promise((resolve, reject) => {
+            directionsService.route(
+                {
+                    origin: origin,
+                    destination: destination,
+                    travelMode: google.maps.TravelMode.DRIVING,
+                    provideRouteAlternatives: false
+                },
+                function(result, status) {
+                    if (status === google.maps.DirectionsStatus.OK) {
+                        // Extract the path from the route
+                        const route = result.routes[0];
+                        if (route && route.overview_path) {
+                            console.log('Got polyline with', route.overview_path.length, 'points for', roadName);
+                            resolve(route.overview_path);
+                        } else {
+                            console.warn('No overview_path in directions result for', roadName);
+                            resolve(null);
+                        }
+                    } else {
+                        console.warn('Directions request failed:', status, 'for', roadName);
+                        resolve(null);
+                    }
+                }
+            );
+        });
+    } catch (error) {
+        console.error('Error getting road polyline:', error);
+        return null;
+    }
+}
+
 // Use fallback road from predefined list
-function useFallbackRoad() {
+async function useFallbackRoad() {
     const randomIndex = Math.floor(Math.random() * BEREA_ROADS.length);
     const roadName = BEREA_ROADS[randomIndex];
     
@@ -276,7 +333,7 @@ function useFallbackRoad() {
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({
         address: roadName + ', Berea, SC'
-    }, function(results, status) {
+    }, async function(results, status) {
         if (status === 'OK' && results.length > 0) {
             const location = results[0].geometry.location;
             const point = {
@@ -286,13 +343,21 @@ function useFallbackRoad() {
             
             // Check if location is within boundary
             if (isPointInBoundary(point)) {
+                // Try to get polyline for fallback road too
+                const roadPolyline = await getRoadPolyline(
+                    { latitude: location.lat(), longitude: location.lng() },
+                    roadName
+                );
+                
                 currentRoad = {
                     name: roadName,
                     geometry: {
                         location: location
-                    }
+                    },
+                    polyline: roadPolyline // Store polyline if available
                 };
                 document.getElementById('currentRoadName').textContent = roadName;
+                console.log('Fallback road:', roadName, 'with', roadPolyline ? roadPolyline.length : 0, 'polyline points');
             } else {
                 // Try another road from the list
                 console.log(roadName, 'is outside boundary, trying another road');
@@ -306,7 +371,8 @@ function useFallbackRoad() {
                     name: roadName,
                     geometry: {
                         location: new google.maps.LatLng(BEREA_CENTER.lat, BEREA_CENTER.lng)
-                    }
+                    },
+                    polyline: null // No polyline available for center point
                 };
                 document.getElementById('currentRoadName').textContent = roadName;
             } else {
@@ -355,28 +421,56 @@ function submitGuess() {
 
     // Get the actual road location
     const roadLocation = currentRoad.geometry.location;
+    
+    // Calculate distance using polyline if available
+    let distance;
+    let closestPoint = roadLocation; // Default to the single point
+    
+    if (currentRoad.polyline && currentRoad.polyline.length > 0) {
+        // Calculate minimum distance to any point along the road polyline
+        console.log('Calculating distance to', currentRoad.polyline.length, 'points on road polyline');
+        
+        let minDistance = Infinity;
+        
+        // Iterate through each point on the polyline
+        for (const point of currentRoad.polyline) {
+            const distanceToPoint = google.maps.geometry.spherical.computeDistanceBetween(
+                userGuessLocation,
+                point
+            );
+            
+            if (distanceToPoint < minDistance) {
+                minDistance = distanceToPoint;
+                closestPoint = point;
+            }
+        }
+        
+        distance = minDistance;
+        console.log('Minimum distance to road polyline:', distance, 'meters');
+    } else {
+        // Fallback to single point distance calculation
+        console.log('No polyline available, using single point distance calculation');
+        distance = google.maps.geometry.spherical.computeDistanceBetween(
+            userGuessLocation,
+            roadLocation
+        );
+    }
 
-    // Place marker on actual road location
+    // Place marker on the closest point of the road
     if (roadMarker) {
         roadMarker.setMap(null);
     }
 
     roadMarker = new google.maps.Marker({
-        position: roadLocation,
+        position: closestPoint,
         map: map,
         icon: {
             url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
             scaledSize: new google.maps.Size(40, 40)
         },
-        title: 'Actual Location',
+        title: 'Closest Point on Road',
         animation: google.maps.Animation.DROP
     });
-
-    // Calculate distance between guess and actual location
-    const distance = google.maps.geometry.spherical.computeDistanceBetween(
-        userGuessLocation,
-        roadLocation
-    );
 
     // Convert distance to miles and feet
     const distanceInMiles = (distance * 0.000621371).toFixed(2);
@@ -385,9 +479,9 @@ function submitGuess() {
     // Display results
     displayResults(distanceInMiles, distanceInFeet, distance);
 
-    // Draw a line between guess and actual location
+    // Draw a line between guess and closest point on road
     const line = new google.maps.Polyline({
-        path: [userGuessLocation, roadLocation],
+        path: [userGuessLocation, closestPoint],
         geodesic: true,
         strokeColor: '#FF0000',
         strokeOpacity: 0.8,
@@ -401,7 +495,7 @@ function submitGuess() {
     // Adjust map bounds to show both markers
     const bounds = new google.maps.LatLngBounds();
     bounds.extend(userGuessLocation);
-    bounds.extend(roadLocation);
+    bounds.extend(closestPoint);
     map.fitBounds(bounds);
 
     // Disable submit button after submission
