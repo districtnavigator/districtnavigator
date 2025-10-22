@@ -5,10 +5,12 @@ A fun geographic guessing game where you try to locate random roads in Berea, SC
 ## Features
 
 - 🎲 Random road selection from Berea, SC area using Google Maps API
+- 🗺️ **District boundary enforcement** - All roads are constrained within the Berea Fire District boundaries
 - 📍 Interactive map for placing your guess
 - 📏 Distance calculation showing how far your guess was from the actual road
 - 🎯 Accuracy feedback based on your performance
 - 🔄 Play multiple rounds with different roads
+- 🔴 Visual display of the district boundary on the map
 
 ## How to Play
 
@@ -92,16 +94,28 @@ You can deploy this application to any static hosting service:
 
 ```
 districtnavigator/
-├── index.html      # Main HTML structure
-├── style.css       # Styling and layout
-├── app.js          # Game logic and API integration
-└── README.md       # Documentation
+├── index.html                              # Main HTML structure
+├── style.css                               # Styling and layout
+├── app.js                                  # Game logic and API integration
+├── berea fire district- District line.csv  # District boundary data (WKT format)
+└── README.md                               # Documentation
 ```
+
+### District Boundary
+
+The application uses the Berea Fire District boundary defined in `berea fire district- District line.csv`. This CSV file contains a LINESTRING in WKT (Well-Known Text) format that defines the district's boundary polygon.
+
+The boundary is:
+- Loaded from the CSV file when the map initializes
+- Displayed as a red polygon overlay on the map
+- Used to filter random road selections to ensure they fall within the district
 
 ### Key Functions
 
-- `initMap()`: Initializes the Google Map and sets up event listeners
-- `selectNewRoad()`: Fetches a random road from Berea, SC using Places API
+- `initMap()`: Initializes the Google Map, loads district boundary, and sets up event listeners
+- `loadDistrictBoundary()`: Parses the CSV file and extracts boundary coordinates from WKT format
+- `isPointInBoundary()`: Checks if a point is inside the district boundary using Google Maps Geometry library or ray-casting algorithm
+- `selectNewRoad()`: Fetches a random road from Berea, SC using Places API and filters to only include roads within the district boundary
 - `placeUserGuess()`: Places a marker where the user clicks
 - `submitGuess()`: Calculates distance and displays results
 - `resetGame()`: Clears the map and prepares for a new round
