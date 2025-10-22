@@ -4,6 +4,8 @@ let currentRoad = null;
 let userMarker = null;
 let roadMarker = null;
 let userGuessLocation = null;
+let districtBoundary = null;
+let districtPolygon = null;
 
 // Berea, SC coordinates
 const BEREA_CENTER = { lat: 34.8854, lng: -82.4568 };
@@ -25,14 +27,103 @@ const BEREA_ROADS = [
     'White Horse Road'
 ];
 
+// Load and parse the district boundary from CSV
+async function loadDistrictBoundary() {
+    try {
+        const response = await fetch('berea fire district- District line.csv');
+        const csvText = await response.text();
+        
+        // Parse CSV - skip header, get second line
+        const lines = csvText.trim().split('\n');
+        if (lines.length < 2) {
+            console.error('Invalid CSV format');
+            return null;
+        }
+        
+        // Extract WKT LINESTRING from the second line
+        const dataLine = lines[1];
+        const wktMatch = dataLine.match(/LINESTRING\s*\(([^)]+)\)/);
+        
+        if (!wktMatch) {
+            console.error('Could not extract LINESTRING from CSV');
+            return null;
+        }
+        
+        // Parse coordinate pairs from WKT
+        const coordString = wktMatch[1];
+        const coordPairs = coordString.split(',').map(pair => {
+            const [lng, lat] = pair.trim().split(/\s+/).map(parseFloat);
+            return { lat, lng };
+        });
+        
+        return coordPairs;
+    } catch (error) {
+        console.error('Error loading district boundary:', error);
+        return null;
+    }
+}
+
+// Check if a point is inside the district boundary polygon
+function isPointInBoundary(point) {
+    if (!districtBoundary || districtBoundary.length === 0) {
+        // If no boundary is loaded, allow all points
+        return true;
+    }
+    
+    // Use Google Maps Geometry library to check if point is in polygon
+    if (districtPolygon && google.maps.geometry.poly.containsLocation) {
+        const latLng = new google.maps.LatLng(point.lat, point.lng);
+        return google.maps.geometry.poly.containsLocation(latLng, districtPolygon);
+    }
+    
+    // Fallback: simple ray-casting algorithm
+    let inside = false;
+    const x = point.lng;
+    const y = point.lat;
+    
+    for (let i = 0, j = districtBoundary.length - 1; i < districtBoundary.length; j = i++) {
+        const xi = districtBoundary[i].lng;
+        const yi = districtBoundary[i].lat;
+        const xj = districtBoundary[j].lng;
+        const yj = districtBoundary[j].lat;
+        
+        const intersect = ((yi > y) !== (yj > y)) &&
+            (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    
+    return inside;
+}
+
 // Initialize the map
-function initMap() {
+async function initMap() {
     // Create map centered on Berea, SC
     map = new google.maps.Map(document.getElementById('map'), {
         center: BEREA_CENTER,
         zoom: 13,
         mapTypeId: 'roadmap'
     });
+
+    // Load district boundary
+    districtBoundary = await loadDistrictBoundary();
+    
+    // Display boundary on map if loaded successfully
+    if (districtBoundary && districtBoundary.length > 0) {
+        // Create polygon to display on map
+        districtPolygon = new google.maps.Polygon({
+            paths: districtBoundary,
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.1,
+            map: map
+        });
+        
+        console.log('District boundary loaded with', districtBoundary.length, 'points');
+    } else {
+        console.warn('Could not load district boundary - will use entire Berea area');
+    }
 
     // Add click listener for user guesses
     map.addListener('click', function(event) {
@@ -77,7 +168,7 @@ async function selectNewRoad() {
 
         if (places && places.length > 0) {
             // Filter for actual roads/streets
-            const roads = places.filter(place => {
+            let roads = places.filter(place => {
                 const name = place.displayName ? place.displayName.toLowerCase() : '';
                 return (name.includes('road') || 
                         name.includes('street') || 
@@ -91,6 +182,22 @@ async function selectNewRoad() {
                        !name.includes('exit') &&
                        !name.includes('bridge');
             });
+
+            // Further filter to only include roads within district boundary
+            if (districtBoundary && districtBoundary.length > 0) {
+                roads = roads.filter(place => {
+                    if (place.location) {
+                        const point = {
+                            lat: place.location.lat(),
+                            lng: place.location.lng()
+                        };
+                        return isPointInBoundary(point);
+                    }
+                    return false;
+                });
+                
+                console.log('Filtered to', roads.length, 'roads within district boundary');
+            }
 
             if (roads.length > 0) {
                 // Select a random road from the results
@@ -129,22 +236,41 @@ function useFallbackRoad() {
         address: roadName + ', Berea, SC'
     }, function(results, status) {
         if (status === 'OK' && results.length > 0) {
-            currentRoad = {
-                name: roadName,
-                geometry: {
-                    location: results[0].geometry.location
-                }
+            const location = results[0].geometry.location;
+            const point = {
+                lat: location.lat(),
+                lng: location.lng()
             };
-            document.getElementById('currentRoadName').textContent = roadName;
+            
+            // Check if location is within boundary
+            if (isPointInBoundary(point)) {
+                currentRoad = {
+                    name: roadName,
+                    geometry: {
+                        location: location
+                    }
+                };
+                document.getElementById('currentRoadName').textContent = roadName;
+            } else {
+                // Try another road from the list
+                console.log(roadName, 'is outside boundary, trying another road');
+                useFallbackRoad();
+            }
         } else {
-            // Last resort fallback
-            currentRoad = {
-                name: roadName,
-                geometry: {
-                    location: new google.maps.LatLng(BEREA_CENTER.lat, BEREA_CENTER.lng)
-                }
-            };
-            document.getElementById('currentRoadName').textContent = roadName;
+            // Last resort fallback - use center if within boundary
+            const centerPoint = { lat: BEREA_CENTER.lat, lng: BEREA_CENTER.lng };
+            if (isPointInBoundary(centerPoint)) {
+                currentRoad = {
+                    name: roadName,
+                    geometry: {
+                        location: new google.maps.LatLng(BEREA_CENTER.lat, BEREA_CENTER.lng)
+                    }
+                };
+                document.getElementById('currentRoadName').textContent = roadName;
+            } else {
+                console.error('Could not find a road within the district boundary');
+                document.getElementById('currentRoadName').textContent = 'Error: No roads found in district';
+            }
         }
     });
 }
