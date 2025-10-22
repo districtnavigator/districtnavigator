@@ -3,9 +3,11 @@ let map;
 let currentRoad = null;
 let userMarker = null;
 let roadMarker = null;
+let randomPointMarker = null; // Green marker for random point (temporary)
 let userGuessLocation = null;
 let districtBoundary = null;
 let districtPolygon = null;
+let polylines = []; // Track all polylines for cleanup
 
 // Berea, SC coordinates
 const BEREA_CENTER = { lat: 34.8854, lng: -82.4568 };
@@ -95,6 +97,52 @@ function isPointInBoundary(point) {
     return inside;
 }
 
+// Generate a random point inside the district boundary
+function generateRandomPointInBoundary() {
+    if (!districtBoundary || districtBoundary.length === 0) {
+        // If no boundary, use area around Berea center
+        const offset = 0.05; // About 5km
+        return {
+            lat: BEREA_CENTER.lat + (Math.random() - 0.5) * offset,
+            lng: BEREA_CENTER.lng + (Math.random() - 0.5) * offset
+        };
+    }
+    
+    // Find bounding box of the district boundary
+    let minLat = districtBoundary[0].lat;
+    let maxLat = districtBoundary[0].lat;
+    let minLng = districtBoundary[0].lng;
+    let maxLng = districtBoundary[0].lng;
+    
+    for (const point of districtBoundary) {
+        minLat = Math.min(minLat, point.lat);
+        maxLat = Math.max(maxLat, point.lat);
+        minLng = Math.min(minLng, point.lng);
+        maxLng = Math.max(maxLng, point.lng);
+    }
+    
+    // Generate random points until we find one inside the boundary
+    let attempts = 0;
+    const maxAttempts = 100;
+    
+    while (attempts < maxAttempts) {
+        const randomPoint = {
+            lat: minLat + Math.random() * (maxLat - minLat),
+            lng: minLng + Math.random() * (maxLng - minLng)
+        };
+        
+        if (isPointInBoundary(randomPoint)) {
+            return randomPoint;
+        }
+        
+        attempts++;
+    }
+    
+    // Fallback: return center if we couldn't find a point
+    console.warn('Could not generate random point in boundary, using center');
+    return { lat: BEREA_CENTER.lat, lng: BEREA_CENTER.lng };
+}
+
 // Initialize the map
 async function initMap() {
     // Create map centered on Berea, SC
@@ -138,7 +186,7 @@ async function initMap() {
     selectNewRoad();
 }
 
-// Select a random road in Berea, SC
+// Select a random road in Berea, SC using Roads API
 async function selectNewRoad() {
     // Reset game state
     resetGame();
@@ -146,81 +194,74 @@ async function selectNewRoad() {
     // Show loading state
     document.getElementById('currentRoadName').textContent = 'Searching for road...';
 
-    // Generate random road type search terms
-    const roadTypes = ['road', 'street', 'avenue', 'highway', 'lane', 'drive'];
-    const randomType = roadTypes[Math.floor(Math.random() * roadTypes.length)];
-    
     try {
-        // Search for roads in Berea area using the new Places API
-        const request = {
-            textQuery: randomType + ' in Berea, SC',
-            fields: ['displayName', 'location'],
-            locationBias: {
-                circle: {
-                    center: BEREA_CENTER,
-                    radius: 5000 // 5km radius
-                }
+        // Step 1: Generate a random point inside the district boundary
+        const randomPoint = generateRandomPointInBoundary();
+        console.log('Generated random point:', randomPoint);
+        
+        // Step 2: Show the random point with a green marker (temporary for testing)
+        randomPointMarker = new google.maps.Marker({
+            position: randomPoint,
+            map: map,
+            icon: {
+                url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                scaledSize: new google.maps.Size(40, 40)
             },
-            maxResultCount: 20
-        };
-
-        const { places } = await google.maps.places.Place.searchByText(request);
-
-        if (places && places.length > 0) {
-            // Filter for actual roads/streets
-            let roads = places.filter(place => {
-                const name = place.displayName ? place.displayName.toLowerCase() : '';
-                return (name.includes('road') || 
-                        name.includes('street') || 
-                        name.includes('avenue') ||
-                        name.includes('highway') ||
-                        name.includes('lane') ||
-                        name.includes('drive') ||
-                        name.includes('way') ||
-                        name.includes('circle') ||
-                        name.includes('boulevard')) &&
-                       !name.includes('exit') &&
-                       !name.includes('bridge');
+            title: 'Random Point',
+            animation: google.maps.Animation.DROP
+        });
+        
+        // Step 3: Use Google Maps Roads API to find the nearest road
+        const apiKey = 'AIzaSyCYmiyfib9rPjQINO44uBwpwoQjt5BV2Ao'; // Same API key from index.html
+        const roadsApiUrl = `https://roads.googleapis.com/v1/nearestRoads?points=${randomPoint.lat},${randomPoint.lng}&key=${apiKey}`;
+        
+        const response = await fetch(roadsApiUrl);
+        const data = await response.json();
+        
+        console.log('Roads API response:', data);
+        
+        if (data.snappedPoints && data.snappedPoints.length > 0) {
+            const snappedPoint = data.snappedPoints[0];
+            const roadLocation = snappedPoint.location;
+            const placeId = snappedPoint.placeId;
+            
+            // Step 4: Get the road name using the placeId with Geocoding API
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ placeId: placeId }, function(results, status) {
+                if (status === 'OK' && results.length > 0) {
+                    // Extract road name from the geocoded address
+                    const address = results[0].address_components;
+                    let roadName = results[0].formatted_address;
+                    
+                    // Try to get just the street name
+                    for (const component of address) {
+                        if (component.types.includes('route')) {
+                            roadName = component.long_name;
+                            break;
+                        }
+                    }
+                    
+                    currentRoad = {
+                        name: roadName,
+                        geometry: {
+                            location: new google.maps.LatLng(roadLocation.latitude, roadLocation.longitude)
+                        },
+                        placeId: placeId
+                    };
+                    
+                    document.getElementById('currentRoadName').textContent = roadName;
+                    console.log('Found road:', roadName);
+                } else {
+                    console.error('Geocoding failed:', status);
+                    useFallbackRoad();
+                }
             });
-
-            // Further filter to only include roads within district boundary
-            if (districtBoundary && districtBoundary.length > 0) {
-                roads = roads.filter(place => {
-                    if (place.location) {
-                        const point = {
-                            lat: place.location.lat(),
-                            lng: place.location.lng()
-                        };
-                        return isPointInBoundary(point);
-                    }
-                    return false;
-                });
-                
-                console.log('Filtered to', roads.length, 'roads within district boundary');
-            }
-
-            if (roads.length > 0) {
-                // Select a random road from the results
-                const randomIndex = Math.floor(Math.random() * roads.length);
-                const selectedPlace = roads[randomIndex];
-                currentRoad = {
-                    name: selectedPlace.displayName,
-                    geometry: {
-                        location: selectedPlace.location
-                    }
-                };
-                document.getElementById('currentRoadName').textContent = currentRoad.name;
-            } else {
-                // Fallback to predefined list if no suitable roads found
-                useFallbackRoad();
-            }
         } else {
-            // Fallback if API request fails
+            console.warn('No roads found near the random point, using fallback');
             useFallbackRoad();
         }
     } catch (error) {
-        console.error('Error fetching roads:', error);
-        // Fallback if API request fails
+        console.error('Error in selectNewRoad:', error);
         useFallbackRoad();
     }
 }
@@ -352,6 +393,9 @@ function submitGuess() {
         strokeWeight: 3,
         map: map
     });
+    
+    // Track the polyline for cleanup
+    polylines.push(line);
 
     // Adjust map bounds to show both markers
     const bounds = new google.maps.LatLngBounds();
@@ -412,9 +456,16 @@ function resetGame() {
         roadMarker.setMap(null);
         roadMarker = null;
     }
+    if (randomPointMarker) {
+        randomPointMarker.setMap(null);
+        randomPointMarker = null;
+    }
 
     // Clear all polylines (lines drawn on map)
-    // Note: This is a simple approach - in production you'd want to track polylines
+    for (const polyline of polylines) {
+        polyline.setMap(null);
+    }
+    polylines = [];
     
     // Reset state
     userGuessLocation = null;
