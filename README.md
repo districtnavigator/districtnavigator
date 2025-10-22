@@ -4,12 +4,14 @@ A fun geographic guessing game where you try to locate random roads in Berea, SC
 
 ## Features
 
-- 🎲 Random road selection from Berea, SC area using Google Maps API
+- 🎲 **Intelligent random road selection** - Uses Google Roads API to find actual roads near random points
 - 🗺️ **District boundary enforcement** - All roads are constrained within the Berea Fire District boundaries
+- 🟢 **Visual debugging** - Green marker shows the random point used for road selection (temporary)
 - 📍 Interactive map for placing your guess
 - 📏 Distance calculation showing how far your guess was from the actual road
 - 🎯 Accuracy feedback based on your performance
 - 🔄 Play multiple rounds with different roads
+- 🧹 **Complete cleanup** - All markers and lines are properly removed when starting a new game
 - 🔴 Visual display of the district boundary on the map
 
 ## How to Play
@@ -31,8 +33,10 @@ A fun geographic guessing game where you try to locate random roads in Berea, SC
 
 - A Google Maps API key with the following APIs enabled:
   - Maps JavaScript API
-  - Places API
+  - Places API (for fallback)
   - Geocoding API
+  - **Roads API** (for finding nearest roads)
+  - Geometry API (for distance calculations)
 
 ### Getting Your API Key
 
@@ -40,8 +44,9 @@ A fun geographic guessing game where you try to locate random roads in Berea, SC
 2. Create a new project or select an existing one
 3. Enable the following APIs:
    - Maps JavaScript API
-   - Places API
+   - Places API (for fallback)
    - Geocoding API
+   - **Roads API** (for finding nearest roads)
    - Geometry API (for distance calculations)
 4. Create credentials (API key)
 5. Copy your API key
@@ -110,15 +115,35 @@ The boundary is:
 - Displayed as a red polygon overlay on the map
 - Used to filter random road selections to ensure they fall within the district
 
+### Road Selection Algorithm
+
+The app uses an intelligent approach to select random roads:
+
+1. **Generate Random Point**: A random geographic point is generated inside the district boundary using:
+   - Bounding box calculation from boundary coordinates
+   - Rejection sampling to ensure the point falls inside the boundary
+   
+2. **Find Nearest Road**: The Google Roads API `nearestRoads` endpoint is called with the random point to find the closest road segment
+
+3. **Retrieve Road Name**: Using the `placeId` returned by Roads API, the Geocoding API retrieves the road's name
+
+4. **Visual Feedback**: A green marker temporarily shows where the random point was placed (useful for understanding the process)
+
+This approach ensures:
+- All roads are genuine roads (not businesses or landmarks)
+- Roads are evenly distributed across the district
+- The game uses real road data from Google Maps
+
 ### Key Functions
 
 - `initMap()`: Initializes the Google Map, loads district boundary, and sets up event listeners
 - `loadDistrictBoundary()`: Parses the CSV file and extracts boundary coordinates from WKT format
 - `isPointInBoundary()`: Checks if a point is inside the district boundary using Google Maps Geometry library or ray-casting algorithm
-- `selectNewRoad()`: Fetches a random road from Berea, SC using Places API and filters to only include roads within the district boundary
+- `generateRandomPointInBoundary()`: Generates a random point inside the district boundary using bounding box and rejection sampling
+- `selectNewRoad()`: **NEW APPROACH** - Generates a random point, uses Roads API to find the nearest road, and retrieves the road name via Geocoding API
 - `placeUserGuess()`: Places a marker where the user clicks
 - `submitGuess()`: Calculates distance and displays results
-- `resetGame()`: Clears the map and prepares for a new round
+- `resetGame()`: Clears the map (all markers and polylines) and prepares for a new round
 
 ## Customization
 
