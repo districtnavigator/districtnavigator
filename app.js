@@ -3,7 +3,6 @@ let map;
 let currentRoad = null;
 let userMarker = null;
 let roadMarker = null;
-let randomPointMarker = null; // Green marker for random point (temporary)
 let userGuessLocation = null;
 let districtBoundary = null;
 let districtPolygon = null;
@@ -251,8 +250,39 @@ async function selectNewRoad() {
     // Display the road name
     document.getElementById('currentRoadName').textContent = roadName;
     
+    // Highlight the chosen road on the map for debugging
+    highlightChosenRoad();
+    
     // Hide map labels so user can't cheat
     hideMapLabels();
+}
+
+// Highlight the chosen road on the map before the guess
+function highlightChosenRoad() {
+    if (!currentRoad || !currentRoad.geometry) {
+        console.error('No road selected to highlight');
+        return;
+    }
+    
+    // Convert GeoJSON geometry to Google Maps LatLng coordinates
+    const roadCoordinates = convertGeoJsonToLatLng(currentRoad.geometry);
+    
+    if (roadCoordinates.length === 0) {
+        console.error('Could not convert road coordinates');
+        return;
+    }
+    
+    console.log('Highlighting road:', currentRoad.name, 'with', roadCoordinates.length, 'points');
+    
+    // Draw the road on the map using a polyline (green for debugging visibility)
+    roadPolyline = new google.maps.Polyline({
+        path: roadCoordinates,
+        geodesic: true,
+        strokeColor: '#00FF00', // Green color for debugging
+        strokeOpacity: 0.8,
+        strokeWeight: 4,
+        map: map
+    });
 }
 
 // Hide map labels to prevent cheating
@@ -341,15 +371,24 @@ function submitGuess() {
     
     console.log('Road has', roadCoordinates.length, 'coordinate points');
     
-    // Draw the road on the map using a red polyline
-    roadPolyline = new google.maps.Polyline({
-        path: roadCoordinates,
-        geodesic: true,
-        strokeColor: '#FF0000',
-        strokeOpacity: 1.0,
-        strokeWeight: 4,
-        map: map
-    });
+    // Update the existing road polyline to red (if it exists from highlighting)
+    if (roadPolyline) {
+        roadPolyline.setOptions({
+            strokeColor: '#FF0000',
+            strokeOpacity: 1.0,
+            strokeWeight: 4
+        });
+    } else {
+        // Draw the road on the map using a red polyline (fallback if not already highlighted)
+        roadPolyline = new google.maps.Polyline({
+            path: roadCoordinates,
+            geodesic: true,
+            strokeColor: '#FF0000',
+            strokeOpacity: 1.0,
+            strokeWeight: 4,
+            map: map
+        });
+    }
     
     // Calculate minimum distance to any point on the road
     let minDistance = Infinity;
@@ -472,10 +511,6 @@ function resetGame() {
     if (roadMarker) {
         roadMarker.setMap(null);
         roadMarker = null;
-    }
-    if (randomPointMarker) {
-        randomPointMarker.setMap(null);
-        randomPointMarker = null;
     }
 
     // Clear the road polyline
