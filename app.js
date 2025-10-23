@@ -9,7 +9,7 @@ let districtBoundary = null;
 let districtPolygon = null;
 let polylines = []; // Track all polylines for cleanup
 let roadsData = null; // Store loaded roads data
-let roadPolyline = null; // Track the currently displayed road polyline
+let roadPolylines = []; // Track the currently displayed road polylines (one per segment)
 
 // Berea, SC coordinates
 const BEREA_CENTER = { lat: 34.8854, lng: -82.4568 };
@@ -274,25 +274,7 @@ function showMapLabels() {
     console.log('Map labels shown');
 }
 
-// Convert road segments coordinates to Google Maps LatLng array
-function convertRoadSegmentsToLatLng(segments) {
-    const coordinates = [];
-    
-    // Process all segments
-    for (const segment of segments) {
-        if (segment.coordinates && Array.isArray(segment.coordinates)) {
-            // coordinates in roads_output.json are already in [lat, lng] format
-            for (const coord of segment.coordinates) {
-                if (Array.isArray(coord) && coord.length >= 2 && 
-                    typeof coord[0] === 'number' && typeof coord[1] === 'number') {
-                    coordinates.push(new google.maps.LatLng(coord[0], coord[1]));
-                }
-            }
-        }
-    }
-    
-    return coordinates;
-}
+
 
 // Place user's guess on the map
 function placeUserGuess(location) {
@@ -330,31 +312,51 @@ function submitGuess() {
         return;
     }
 
-    // Convert road segments to LatLng coordinates
-    const roadCoordinates = convertRoadSegmentsToLatLng(currentRoad.segments);
+    // Draw each segment separately as its own polyline
+    const allRoadCoordinates = [];
     
-    if (roadCoordinates.length === 0) {
+    for (const segment of currentRoad.segments) {
+        if (!segment.coordinates || !Array.isArray(segment.coordinates)) {
+            continue;
+        }
+        
+        // Convert this segment's coordinates to LatLng
+        const segmentCoordinates = [];
+        for (const coord of segment.coordinates) {
+            if (Array.isArray(coord) && coord.length >= 2 && 
+                typeof coord[0] === 'number' && typeof coord[1] === 'number') {
+                const latLng = new google.maps.LatLng(coord[0], coord[1]);
+                segmentCoordinates.push(latLng);
+                allRoadCoordinates.push(latLng); // Also track all points for distance calculation
+            }
+        }
+        
+        // Draw this segment as a separate polyline
+        if (segmentCoordinates.length > 0) {
+            const segmentPolyline = new google.maps.Polyline({
+                path: segmentCoordinates,
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 1.0,
+                strokeWeight: 4,
+                map: map
+            });
+            roadPolylines.push(segmentPolyline);
+        }
+    }
+    
+    if (allRoadCoordinates.length === 0) {
         alert('Error: Could not load road coordinates');
         return;
     }
     
-    console.log('Road has', roadCoordinates.length, 'coordinate points');
-    
-    // Draw the road on the map using a red polyline
-    roadPolyline = new google.maps.Polyline({
-        path: roadCoordinates,
-        geodesic: true,
-        strokeColor: '#FF0000',
-        strokeOpacity: 1.0,
-        strokeWeight: 4,
-        map: map
-    });
+    console.log('Road has', currentRoad.segments.length, 'segments with', allRoadCoordinates.length, 'total coordinate points');
     
     // Calculate minimum distance to any point on the road
     let minDistance = Infinity;
-    let closestPoint = roadCoordinates[0];
+    let closestPoint = allRoadCoordinates[0];
     
-    for (const point of roadCoordinates) {
+    for (const point of allRoadCoordinates) {
         const distance = google.maps.geometry.spherical.computeDistanceBetween(
             userGuessLocation,
             point
@@ -410,7 +412,7 @@ function submitGuess() {
     bounds.extend(closestPoint);
     
     // Extend bounds to include all road coordinates for better view
-    for (const coord of roadCoordinates) {
+    for (const coord of allRoadCoordinates) {
         bounds.extend(coord);
     }
     
@@ -477,11 +479,11 @@ function resetGame() {
         randomPointMarker = null;
     }
 
-    // Clear the road polyline
-    if (roadPolyline) {
-        roadPolyline.setMap(null);
-        roadPolyline = null;
+    // Clear all road polylines
+    for (const polyline of roadPolylines) {
+        polyline.setMap(null);
     }
+    roadPolylines = [];
 
     // Clear all polylines (lines drawn on map)
     for (const polyline of polylines) {
