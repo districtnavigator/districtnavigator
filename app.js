@@ -8,7 +8,7 @@ let userGuessLocation = null;
 let districtBoundary = null;
 let districtPolygon = null;
 let polylines = []; // Track all polylines for cleanup
-let roadsData = null; // Store loaded GeoJSON roads data
+let roadsData = null; // Store loaded roads data
 let roadPolyline = null; // Track the currently displayed road polyline
 
 // Berea, SC coordinates
@@ -67,21 +67,26 @@ async function loadDistrictBoundary() {
     }
 }
 
-// Load roads from GeoJSON file
+// Load roads from JSON file
 async function loadRoadsData() {
     try {
-        const response = await fetch('roads_by_name.geojson');
+        const response = await fetch('roads_output.json');
         const data = await response.json();
         
-        if (data && data.features && Array.isArray(data.features)) {
-            console.log('Loaded', data.features.length, 'roads from GeoJSON');
-            return data.features;
+        if (data && data.roads && typeof data.roads === 'object') {
+            // Convert roads object to array format for easier handling
+            const roadsArray = Object.entries(data.roads).map(([name, segments]) => ({
+                name: name,
+                segments: segments
+            }));
+            console.log('Loaded', roadsArray.length, 'roads from JSON');
+            return roadsArray;
         } else {
-            console.error('Invalid GeoJSON format');
+            console.error('Invalid roads JSON format');
             return null;
         }
     } catch (error) {
-        console.error('Error loading roads GeoJSON:', error);
+        console.error('Error loading roads JSON:', error);
         return null;
     }
 }
@@ -175,7 +180,7 @@ async function initMap() {
         styles: []
     });
 
-    // Load roads data from GeoJSON
+    // Load roads data from JSON
     roadsData = await loadRoadsData();
     if (!roadsData || roadsData.length === 0) {
         console.error('Failed to load roads data');
@@ -218,7 +223,7 @@ async function initMap() {
     selectNewRoad();
 }
 
-// Select a random road from the GeoJSON data
+// Select a random road from the loaded data
 async function selectNewRoad() {
     // Reset game state
     resetGame();
@@ -231,25 +236,20 @@ async function selectNewRoad() {
         return;
     }
 
-    // Pick a random road from the GeoJSON features
+    // Pick a random road from the data
     const randomIndex = Math.floor(Math.random() * roadsData.length);
-    const roadFeature = roadsData[randomIndex];
+    const roadData = roadsData[randomIndex];
     
-    // Extract road name and geometry
-    const roadName = roadFeature.properties.name;
-    const geometry = roadFeature.geometry;
+    console.log('Selected road:', roadData.name, 'with', roadData.segments.length, 'segments');
     
-    console.log('Selected road:', roadName, 'Type:', geometry.type);
-    
-    // Store the current road with its complete GeoJSON data
+    // Store the current road with its data
     currentRoad = {
-        name: roadName,
-        feature: roadFeature,
-        geometry: geometry
+        name: roadData.name,
+        segments: roadData.segments
     };
     
     // Display the road name
-    document.getElementById('currentRoadName').textContent = roadName;
+    document.getElementById('currentRoadName').textContent = roadData.name;
     
     // Hide map labels so user can't cheat
     hideMapLabels();
@@ -274,20 +274,16 @@ function showMapLabels() {
     console.log('Map labels shown');
 }
 
-// Convert GeoJSON coordinates to Google Maps LatLng array
-function convertGeoJsonToLatLng(geometry) {
+// Convert road segments coordinates to Google Maps LatLng array
+function convertRoadSegmentsToLatLng(segments) {
     const coordinates = [];
     
-    if (geometry.type === 'LineString') {
-        // Single line: coordinates is an array of [lng, lat] pairs
-        for (const coord of geometry.coordinates) {
-            coordinates.push(new google.maps.LatLng(coord[1], coord[0]));
-        }
-    } else if (geometry.type === 'MultiLineString') {
-        // Multiple lines: coordinates is an array of arrays of [lng, lat] pairs
-        for (const lineString of geometry.coordinates) {
-            for (const coord of lineString) {
-                coordinates.push(new google.maps.LatLng(coord[1], coord[0]));
+    // Process all segments
+    for (const segment of segments) {
+        if (segment.coordinates && Array.isArray(segment.coordinates)) {
+            // coordinates in roads_output.json are already in [lat, lng] format
+            for (const coord of segment.coordinates) {
+                coordinates.push(new google.maps.LatLng(coord[0], coord[1]));
             }
         }
     }
@@ -331,8 +327,8 @@ function submitGuess() {
         return;
     }
 
-    // Convert GeoJSON geometry to LatLng coordinates
-    const roadCoordinates = convertGeoJsonToLatLng(currentRoad.geometry);
+    // Convert road segments to LatLng coordinates
+    const roadCoordinates = convertRoadSegmentsToLatLng(currentRoad.segments);
     
     if (roadCoordinates.length === 0) {
         alert('Error: Could not load road coordinates');
