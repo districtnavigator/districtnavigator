@@ -27,3 +27,4 @@ build/
 
 # Test files
 test_*.html
+tmp/

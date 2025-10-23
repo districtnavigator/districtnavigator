@@ -76,8 +76,8 @@ async function loadRoadsData() {
         if (data && data.roads && typeof data.roads === 'object') {
             // Convert roads object to array format for easier handling
             const roadsArray = Object.entries(data.roads).map(([name, segments]) => ({
-                name: name,
-                segments: segments
+                name,
+                segments
             }));
             console.log('Loaded', roadsArray.length, 'roads from JSON');
             return roadsArray;
@@ -283,7 +283,10 @@ function convertRoadSegmentsToLatLng(segments) {
         if (segment.coordinates && Array.isArray(segment.coordinates)) {
             // coordinates in roads_output.json are already in [lat, lng] format
             for (const coord of segment.coordinates) {
-                coordinates.push(new google.maps.LatLng(coord[0], coord[1]));
+                if (Array.isArray(coord) && coord.length >= 2 && 
+                    typeof coord[0] === 'number' && typeof coord[1] === 'number') {
+                    coordinates.push(new google.maps.LatLng(coord[0], coord[1]));
+                }
             }
         }
     }
