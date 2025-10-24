@@ -70,14 +70,17 @@ async function loadDistrictBoundary() {
 // Load roads from JSON file
 async function loadRoadsData() {
     try {
-        const response = await fetch('roads_output.json');
+        const response = await fetch('roads_formatted.json');
         const data = await response.json();
         
-        if (data && data.roads && typeof data.roads === 'object') {
+        if (data && typeof data === 'object') {
             // Convert roads object to array format for easier handling
-            const roadsArray = Object.entries(data.roads).map(([name, segments]) => ({
+            // New format: { "Road Name": { name, coordinates, segment_count, total_points } }
+            const roadsArray = Object.entries(data).map(([name, roadData]) => ({
                 name,
-                segments
+                coordinates: roadData.coordinates,
+                segment_count: roadData.segment_count,
+                total_points: roadData.total_points
             }));
             console.log('Loaded', roadsArray.length, 'roads from JSON');
             return roadsArray;
@@ -240,12 +243,12 @@ async function selectNewRoad() {
     const randomIndex = Math.floor(Math.random() * roadsData.length);
     const roadData = roadsData[randomIndex];
     
-    console.log('Selected road:', roadData.name, 'with', roadData.segments.length, 'segments');
+    console.log('Selected road:', roadData.name, 'with', roadData.total_points, 'points');
     
     // Store the current road with its data
     currentRoad = {
         name: roadData.name,
-        segments: roadData.segments
+        coordinates: roadData.coordinates
     };
     
     // Display the road name
@@ -312,45 +315,42 @@ function submitGuess() {
         return;
     }
 
-    // Draw each segment separately as its own polyline
+    // Convert coordinates to LatLng objects
+    // New format: coordinates are [lng, lat] in roads_formatted.json
     const allRoadCoordinates = [];
     
-    for (const segment of currentRoad.segments) {
-        if (!segment.coordinates || !Array.isArray(segment.coordinates)) {
-            continue;
-        }
-        
-        // Convert this segment's coordinates to LatLng
-        const segmentCoordinates = [];
-        for (const coord of segment.coordinates) {
-            if (Array.isArray(coord) && coord.length >= 2 && 
-                typeof coord[0] === 'number' && typeof coord[1] === 'number') {
-                const latLng = new google.maps.LatLng(coord[0], coord[1]);
-                segmentCoordinates.push(latLng);
-                allRoadCoordinates.push(latLng); // Also track all points for distance calculation
-            }
-        }
-        
-        // Draw this segment as a separate polyline
-        if (segmentCoordinates.length > 0) {
-            const segmentPolyline = new google.maps.Polyline({
-                path: segmentCoordinates,
-                geodesic: true,
-                strokeColor: '#FF0000',
-                strokeOpacity: 1.0,
-                strokeWeight: 4,
-                map: map
-            });
-            roadPolylines.push(segmentPolyline);
-        }
-    }
-    
-    if (allRoadCoordinates.length === 0) {
+    if (!currentRoad.coordinates || !Array.isArray(currentRoad.coordinates)) {
         alert('Error: Could not load road coordinates');
         return;
     }
     
-    console.log('Road has', currentRoad.segments.length, 'segments with', allRoadCoordinates.length, 'total coordinate points');
+    // Convert each coordinate pair to LatLng
+    for (const coord of currentRoad.coordinates) {
+        if (Array.isArray(coord) && coord.length >= 2 && 
+            typeof coord[0] === 'number' && typeof coord[1] === 'number') {
+            // New format is [lng, lat], so we create LatLng as (lat, lng)
+            const latLng = new google.maps.LatLng(coord[1], coord[0]);
+            allRoadCoordinates.push(latLng);
+        }
+    }
+    
+    if (allRoadCoordinates.length === 0) {
+        alert('Error: Could not parse road coordinates');
+        return;
+    }
+    
+    console.log('Road has', allRoadCoordinates.length, 'coordinate points');
+    
+    // Draw the road as a single polyline with all coordinates
+    const roadPolyline = new google.maps.Polyline({
+        path: allRoadCoordinates,
+        geodesic: true,
+        strokeColor: '#FF0000',
+        strokeOpacity: 1.0,
+        strokeWeight: 4,
+        map: map
+    });
+    roadPolylines.push(roadPolyline);
     
     // Calculate minimum distance to any point on the road
     let minDistance = Infinity;
