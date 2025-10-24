@@ -9,7 +9,7 @@ let districtBoundary = null;
 let districtPolygon = null;
 let polylines = []; // Track all polylines for cleanup
 let roadsData = null; // Store loaded roads data
-let roadPolylines = []; // Track the currently displayed road polylines (one per segment)
+let roadPolylines = []; // Track the currently displayed road polyline(s)
 
 // Berea, SC coordinates
 const BEREA_CENTER = { lat: 34.8854, lng: -82.4568 };
