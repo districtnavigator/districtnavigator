@@ -321,9 +321,6 @@ function submitGuess() {
         return;
     }
 
-    // Mark that a guess has been submitted
-    guessSubmitted = true;
-
     // Convert coordinates to LatLng objects
     // New format: coordinates are [lng, lat] in roads_formatted.json
     const allRoadCoordinates = [];
@@ -347,6 +344,9 @@ function submitGuess() {
         alert('Error: Could not parse road coordinates');
         return;
     }
+    
+    // Mark that a guess has been submitted (after validation passes)
+    guessSubmitted = true;
     
     console.log('Road has', allRoadCoordinates.length, 'coordinate points');
     
