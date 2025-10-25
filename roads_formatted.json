@@ -24665,8 +24665,8 @@
     "segment_count": 10,
     "total_points": 61
   },
-  "North Haven Drive / South Haven Drive": {
-    "name": "North Haven Drive / South Haven Drive",
+  "South Haven Drive / North Haven Drive": {
+    "name": "South Haven Drive / North Haven Drive",
     "coordinates": [
       [
         -82.431725,
@@ -24787,126 +24787,10 @@
       [
         -82.43181,
         34.891505
-      ],
-      [
-        -82.431715,
-        34.891515
-      ],
-      [
-        -82.430836,
-        34.891547
-      ],
-      [
-        -82.429571,
-        34.891602
-      ],
-      [
-        -82.429255,
-        34.891605
-      ],
-      [
-        -82.429174,
-        34.8916
-      ],
-      [
-        -82.429084,
-        34.891588
-      ],
-      [
-        -82.42876,
-        34.891511
-      ],
-      [
-        -82.428687,
-        34.891499
-      ],
-      [
-        -82.428606,
-        34.891492
-      ],
-      [
-        -82.427832,
-        34.891512
-      ],
-      [
-        -82.427181,
-        34.891538
-      ],
-      [
-        -82.427086,
-        34.891536
-      ],
-      [
-        -82.427049,
-        34.891529
-      ],
-      [
-        -82.427016,
-        34.891514
-      ],
-      [
-        -82.426988,
-        34.891492
-      ],
-      [
-        -82.426972,
-        34.891467
-      ],
-      [
-        -82.426963,
-        34.89144
-      ],
-      [
-        -82.426962,
-        34.891417
-      ],
-      [
-        -82.426968,
-        34.891388
-      ],
-      [
-        -82.427174,
-        34.890961
-      ],
-      [
-        -82.427251,
-        34.89083
-      ],
-      [
-        -82.427283,
-        34.890788
-      ],
-      [
-        -82.427352,
-        34.890723
-      ],
-      [
-        -82.427433,
-        34.890668
-      ],
-      [
-        -82.427525,
-        34.890627
-      ],
-      [
-        -82.427588,
-        34.890611
-      ],
-      [
-        -82.427712,
-        34.890603
-      ],
-      [
-        -82.428229,
-        34.890588
-      ],
-      [
-        -82.431725,
-        34.890446
       ]
     ],
-    "segment_count": 2,
-    "total_points": 59
+    "segment_count": 1,
+    "total_points": 30
   },
   "Old Buncombe Road": {
     "name": "Old Buncombe Road",
@@ -31101,8 +30985,8 @@
     "segment_count": 12,
     "total_points": 30
   },
-  "Bishop Street / Lester Avenue": {
-    "name": "Bishop Street / Lester Avenue",
+  "Lester Avenue / Bishop Street": {
+    "name": "Lester Avenue / Bishop Street",
     "coordinates": [
       [
         -82.432016,
@@ -39782,8 +39666,8 @@
     "segment_count": 2,
     "total_points": 13
   },
-  "Oil Mill Road / South Old White Horse Road": {
-    "name": "Oil Mill Road / South Old White Horse Road",
+  "South Old White Horse Road / Oil Mill Road": {
+    "name": "South Old White Horse Road / Oil Mill Road",
     "coordinates": [
       [
         -82.447337,
@@ -46443,8 +46327,8 @@
     "segment_count": 12,
     "total_points": 57
   },
-  "Lakecrest Drive / Cherie Court": {
-    "name": "Lakecrest Drive / Cherie Court",
+  "Cherie Court / Lakecrest Drive": {
+    "name": "Cherie Court / Lakecrest Drive",
     "coordinates": [
       [
         -82.481568,
@@ -56906,8 +56790,8 @@
     "segment_count": 4,
     "total_points": 16
   },
-  "Blanche Road / Blanche Drive": {
-    "name": "Blanche Road / Blanche Drive",
+  "Blanche Drive / Blanche Road": {
+    "name": "Blanche Drive / Blanche Road",
     "coordinates": [
       [
         -82.467828,
@@ -57737,42 +57621,10 @@
       [
         -82.4806487,
         34.8596237
-      ],
-      [
-        -82.4807693,
-        34.8595099
-      ],
-      [
-        -82.4810161,
-        34.8593699
-      ],
-      [
-        -82.4815673,
-        34.8588475
-      ],
-      [
-        -82.481511,
-        34.858763
-      ],
-      [
-        -82.481417,
-        34.858713
-      ],
-      [
-        -82.481273,
-        34.858602
-      ],
-      [
-        -82.481045,
-        34.858426
-      ],
-      [
-        -82.4809926,
-        34.8583922
       ]
     ],
-    "segment_count": 2,
-    "total_points": 17
+    "segment_count": 1,
+    "total_points": 9
   },
   "Saxum Way": {
     "name": "Saxum Way",
@@ -63483,8 +63335,8 @@
     "segment_count": 6,
     "total_points": 26
   },
-  "Arch Street Extension / Alma Street": {
-    "name": "Arch Street Extension / Alma Street",
+  "Alma Street / Arch Street Extension": {
+    "name": "Alma Street / Arch Street Extension",
     "coordinates": [
       [
         -82.444883,
@@ -64897,8 +64749,8 @@
     "segment_count": 6,
     "total_points": 69
   },
-  "Almena Drive / Crane Avenue": {
-    "name": "Almena Drive / Crane Avenue",
+  "Crane Avenue / Almena Drive": {
+    "name": "Crane Avenue / Almena Drive",
     "coordinates": [
       [
         -82.445671,
@@ -70613,8 +70465,8 @@
     "segment_count": 2,
     "total_points": 5
   },
-  "West Sable Court / East Sable Court": {
-    "name": "West Sable Court / East Sable Court",
+  "East Sable Court / West Sable Court": {
+    "name": "East Sable Court / West Sable Court",
     "coordinates": [
       [
         -82.450091,
@@ -71383,6 +71235,133 @@
     ],
     "segment_count": 8,
     "total_points": 82
+  },
+  "North Haven Drive / South Haven Drive": {
+    "name": "North Haven Drive / South Haven Drive",
+    "coordinates": [
+      [
+        -82.43181,
+        34.891505
+      ],
+      [
+        -82.431715,
+        34.891515
+      ],
+      [
+        -82.430836,
+        34.891547
+      ],
+      [
+        -82.429571,
+        34.891602
+      ],
+      [
+        -82.429255,
+        34.891605
+      ],
+      [
+        -82.429174,
+        34.8916
+      ],
+      [
+        -82.429084,
+        34.891588
+      ],
+      [
+        -82.42876,
+        34.891511
+      ],
+      [
+        -82.428687,
+        34.891499
+      ],
+      [
+        -82.428606,
+        34.891492
+      ],
+      [
+        -82.427832,
+        34.891512
+      ],
+      [
+        -82.427181,
+        34.891538
+      ],
+      [
+        -82.427086,
+        34.891536
+      ],
+      [
+        -82.427049,
+        34.891529
+      ],
+      [
+        -82.427016,
+        34.891514
+      ],
+      [
+        -82.426988,
+        34.891492
+      ],
+      [
+        -82.426972,
+        34.891467
+      ],
+      [
+        -82.426963,
+        34.89144
+      ],
+      [
+        -82.426962,
+        34.891417
+      ],
+      [
+        -82.426968,
+        34.891388
+      ],
+      [
+        -82.427174,
+        34.890961
+      ],
+      [
+        -82.427251,
+        34.89083
+      ],
+      [
+        -82.427283,
+        34.890788
+      ],
+      [
+        -82.427352,
+        34.890723
+      ],
+      [
+        -82.427433,
+        34.890668
+      ],
+      [
+        -82.427525,
+        34.890627
+      ],
+      [
+        -82.427588,
+        34.890611
+      ],
+      [
+        -82.427712,
+        34.890603
+      ],
+      [
+        -82.428229,
+        34.890588
+      ],
+      [
+        -82.431725,
+        34.890446
+      ]
+    ],
+    "segment_count": 1,
+    "total_points": 30
   },
   "Irene Circle": {
     "name": "Irene Circle",
@@ -82638,6 +82617,49 @@
       ]
     ],
     "segment_count": 2,
+    "total_points": 9
+  },
+  "Stanley Drive / Spinnaker Court": {
+    "name": "Stanley Drive / Spinnaker Court",
+    "coordinates": [
+      [
+        -82.4806487,
+        34.8596237
+      ],
+      [
+        -82.4807693,
+        34.8595099
+      ],
+      [
+        -82.4810161,
+        34.8593699
+      ],
+      [
+        -82.4815673,
+        34.8588475
+      ],
+      [
+        -82.481511,
+        34.858763
+      ],
+      [
+        -82.481417,
+        34.858713
+      ],
+      [
+        -82.481273,
+        34.858602
+      ],
+      [
+        -82.481045,
+        34.858426
+      ],
+      [
+        -82.4809926,
+        34.8583922
+      ]
+    ],
+    "segment_count": 1,
     "total_points": 9
   },
   "Woodcourt Circle": {
