@@ -10,6 +10,7 @@ let districtPolygon = null;
 let polylines = []; // Track all polylines for cleanup
 let roadsData = null; // Store loaded roads data
 let roadPolylines = []; // Track the currently displayed road polyline(s)
+let guessSubmitted = false; // Track if a guess has been submitted
 
 // Berea, SC coordinates
 const BEREA_CENTER = { lat: 34.8854, lng: -82.4568 };
@@ -281,6 +282,11 @@ function showMapLabels() {
 
 // Place user's guess on the map
 function placeUserGuess(location) {
+    // Don't allow placing a new guess if one has already been submitted
+    if (guessSubmitted) {
+        return;
+    }
+
     // Remove previous marker if exists
     if (userMarker) {
         userMarker.setMap(null);
@@ -314,6 +320,9 @@ function submitGuess() {
         alert('Please place a guess on the map first!');
         return;
     }
+
+    // Mark that a guess has been submitted
+    guessSubmitted = true;
 
     // Convert coordinates to LatLng objects
     // New format: coordinates are [lng, lat] in roads_formatted.json
@@ -494,6 +503,7 @@ function resetGame() {
     // Reset state
     userGuessLocation = null;
     currentRoad = null;
+    guessSubmitted = false; // Reset the guess submitted flag
 
     // Reset UI
     document.getElementById('submitGuess').disabled = true;
