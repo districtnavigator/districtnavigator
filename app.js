@@ -307,7 +307,7 @@ function placeUserGuess(location) {
     // Store the guess location
     userGuessLocation = location;
 
-    // Enable submit button
+    // Enable submit button (only if guess hasn't been submitted)
     document.getElementById('submitGuess').disabled = false;
 
     // Hide previous results
