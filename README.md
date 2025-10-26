@@ -2,6 +2,8 @@
 
 A fun geographic guessing game where you try to locate random roads in Berea, SC on a map!
 
+> ⚠️ **SECURITY NOTICE**: This application requires a Google Maps API key. **Never commit your API key to the repository**. See [DEPLOYMENT.md](DEPLOYMENT.md) for secure setup instructions.
+
 ## Features
 
 - 🎲 **Intelligent random road selection** - Uses Google Roads API to find actual roads near random points
@@ -57,26 +59,46 @@ A fun geographic guessing game where you try to locate random roads in Berea, SC
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/District-Navigator/districtnavigator.git
+   git clone https://github.com/districtnavigator/districtnavigator.git
    cd districtnavigator
    ```
 
-2. Open `index.html` in a text editor
-
-3. Replace `YOUR_API_KEY` with your actual Google Maps API key:
+2. Configure your API key using the setup script:
+   ```bash
+   ./setup.sh
+   ```
+   
+   Or manually edit `index.html` and replace `YOUR_GOOGLE_MAPS_API_KEY` with your actual Google Maps API key:
    ```html
    <script async defer
        src="https://maps.googleapis.com/maps/api/js?key=YOUR_ACTUAL_API_KEY&libraries=places,geometry&callback=initMap">
    </script>
    ```
 
-4. Open `index.html` in a web browser (preferably Chrome or Firefox)
+   ⚠️ **IMPORTANT**: Do not commit your API key to the repository!
+
+3. Open `index.html` in a web browser (preferably Chrome or Firefox)
 
 ### Deployment
 
-You can deploy this application to any static hosting service:
+⚠️ **IMPORTANT**: Before deploying, you must configure your Google Maps API key. Never commit API keys to your repository!
 
-- **GitHub Pages**: Push to a repository and enable GitHub Pages
+#### Quick Setup
+```bash
+# Run the setup script to configure your API key
+./setup.sh
+
+# Test locally
+python -m http.server 8000
+```
+
+#### Deployment Options
+
+- **GitHub Pages**: See [DEPLOYMENT.md](DEPLOYMENT.md) for complete instructions
+  - Includes automated deployment with GitHub Actions
+  - Secure API key management using GitHub Secrets
+  - Recommended for public hosting
+  
 - **Netlify**: Drag and drop the folder to Netlify
 - **Vercel**: Deploy with a single command
 - **Local Server**: Use a simple HTTP server:
@@ -85,6 +107,8 @@ You can deploy this application to any static hosting service:
   # or
   npx http-server
   ```
+
+📖 **For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)**
 
 ## Technical Details
 
