@@ -56,8 +56,9 @@ else
         cp index.html index.html.backup
         echo "💾 Created backup: index.html.backup"
         
-        # Replace any API key pattern
-        sed -i.tmp "s/key=[A-Za-z0-9_-]*/key=$api_key/g" index.html
+        # Replace the API key in the Google Maps script tag
+        # This matches the key parameter in the script URL
+        sed -i.tmp "s|\(maps/api/js?key=\)[^&]*|\1$api_key|g" index.html
         rm -f index.html.tmp
         
         echo "✅ API key updated successfully!"
@@ -71,11 +72,11 @@ fi
 echo "🧪 Testing configuration..."
 echo ""
 
-# Check if the key looks valid
-if grep -q "key=[A-Za-z0-9_-]\{30,\}" index.html; then
+# Check if the key looks valid (Google API keys are typically 39 characters)
+if grep -q "key=[A-Za-z0-9_-]\{35,\}" index.html; then
     echo "✅ API key format looks valid"
 else
-    echo "⚠️  Warning: API key format may be invalid"
+    echo "⚠️  Warning: API key format may be invalid (should be ~39 characters)"
 fi
 
 echo ""

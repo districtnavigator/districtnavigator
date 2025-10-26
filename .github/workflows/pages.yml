@@ -30,7 +30,7 @@ jobs:
       - name: Insert API Key
         run: |
           if [ -n "${{ secrets.GOOGLE_MAPS_API_KEY }}" ]; then
-            sed -i 's/YOUR_GOOGLE_MAPS_API_KEY/${{ secrets.GOOGLE_MAPS_API_KEY }}/g' index.html
+            sed -i "s/YOUR_GOOGLE_MAPS_API_KEY/${{ secrets.GOOGLE_MAPS_API_KEY }}/g" index.html
             echo "✅ API key inserted successfully"
           else
             echo "⚠️ WARNING: GOOGLE_MAPS_API_KEY secret not set. Map will not work until you add it."

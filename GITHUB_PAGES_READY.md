@@ -109,9 +109,12 @@ After deploying to GitHub Pages:
 
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Complete deployment guide
 - [README.md](README.md) - General documentation
-- [QUICKSTART.md](QUICKSTART.md) - Quick start guide
-- [SETUP.md](SETUP.md) - Setup instructions
-- [TESTING.md](TESTING.md) - Testing guide
+- [GITHUB_PAGES_READY.md](GITHUB_PAGES_READY.md) - This readiness checklist
+
+For additional documentation available in the repository:
+- QUICKSTART.md - Quick start guide (if available)
+- SETUP.md - Setup instructions (if available)
+- TESTING.md - Testing guide (if available)
 
 ## 🔍 Known Limitations
 

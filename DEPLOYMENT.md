@@ -101,7 +101,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -141,11 +141,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Insert API Key
         run: |
-          sed -i 's/YOUR_GOOGLE_MAPS_API_KEY/${{ secrets.GOOGLE_MAPS_API_KEY }}/g' index.html
+          sed -i "s/YOUR_GOOGLE_MAPS_API_KEY/${{ secrets.GOOGLE_MAPS_API_KEY }}/g" index.html
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
