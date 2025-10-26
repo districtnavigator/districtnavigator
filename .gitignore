@@ -4,12 +4,6 @@
 config.js
 secrets.json
 
-# Configured files with API keys (optional - uncomment if you want to keep your configured index.html local)
-# index.html
-
-# Backup files
-*.backup
-
 # Development
 node_modules/
 .vscode/
